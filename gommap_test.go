@@ -42,7 +42,6 @@ func (s *S) TestUnsafeUnmap(c *C) {
                             gommap.MAP_SHARED)
     c.Assert(err, IsNil)
     c.Assert(mmap.UnsafeUnmap(), IsNil)
-    c.Assert(mmap.Data, IsNil)
 }
 
 func (s *S) TestReadWrite(c *C) {
@@ -50,9 +49,9 @@ func (s *S) TestReadWrite(c *C) {
                             gommap.MAP_SHARED)
     c.Assert(err, IsNil)
     defer mmap.UnsafeUnmap()
-    c.Assert(mmap.Data[:], Equals, testData)
+    c.Assert([]uint8(mmap), Equals, testData)
 
-    mmap.Data[9] = 'X'
+    mmap[9] = 'X'
     mmap.Sync(gommap.MS_SYNC)
 
     fileData, err := ioutil.ReadFile(s.file.Name())
@@ -60,33 +59,19 @@ func (s *S) TestReadWrite(c *C) {
     c.Assert(fileData, Equals, []byte("012345678XABCDEF"))
 }
 
-func (s *S) TestRegionsRespectBoundaries(c *C) {
+func (s *S) TestSliceMethods(c *C) {
     mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ | gommap.PROT_WRITE,
                             gommap.MAP_SHARED)
     c.Assert(err, IsNil)
     defer mmap.UnsafeUnmap()
+    c.Assert([]uint8(mmap), Equals, testData)
 
-    badRegion := make([]byte, 5)
-    err = mmap.UnsafeUnmapSlice(badRegion)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
+    mmap[9] = 'X'
+    mmap[7:10].Sync(gommap.MS_SYNC)
 
-    err = mmap.SyncSlice(badRegion, gommap.MS_SYNC)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
-
-    err = mmap.AdviseSlice(badRegion, gommap.MADV_NORMAL)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
-
-    err = mmap.ProtectSlice(badRegion, gommap.PROT_READ)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
-
-    err = mmap.LockSlice(badRegion)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
-
-    err = mmap.UnlockSlice(badRegion)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
-
-    _, err = mmap.InCoreSlice(badRegion)
-    c.Assert(err, Matches, "Region must be a slice of mmap.Data")
+    fileData, err := ioutil.ReadFile(s.file.Name())
+    c.Assert(err, IsNil)
+    c.Assert(fileData, Equals, []byte("012345678XABCDEF"))
 }
 
 func (s *S) TestProtFlagsAndErr(c *C) {
@@ -107,7 +92,7 @@ func (s *S) TestFlags(c *C) {
     c.Assert(err, IsNil)
     defer mmap.UnsafeUnmap()
 
-    mmap.Data[9] = 'X'
+    mmap[9] = 'X'
     mmap.Sync(gommap.MS_SYNC)
 
     fileData, err := ioutil.ReadFile(s.file.Name())
@@ -132,17 +117,16 @@ func (s *S) TestAdvise(c *C) {
 }
 
 func (s *S) TestProtect(c *C) {
-    mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ,
-                            gommap.MAP_SHARED)
+    mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ, gommap.MAP_SHARED)
     c.Assert(err, IsNil)
     defer mmap.UnsafeUnmap()
-    c.Assert(mmap.Data[:], Equals, testData)
+    c.Assert([]uint8(mmap), Equals, testData)
 
     err = mmap.Protect(gommap.PROT_READ | gommap.PROT_WRITE)
     c.Assert(err, IsNil)
 
     // If this operation doesn't blow up tests, the call above worked.
-    mmap.Data[9] = 'X'
+    mmap[9] = 'X'
 }
 
 
@@ -194,13 +178,13 @@ func (s *S) TestInCoreTwoPages(c *C) {
 
     // Not entirely a stable test, but should usually work.
 
-    mmap.Data[len(mmap.Data)-1] = 'x'
+    mmap[len(mmap)-1] = 'x'
 
     mapped, err := mmap.InCore()
     c.Assert(err, IsNil)
     c.Assert(mapped, Equals, []uint8{0, 1})
 
-    mmap.Data[0] = 'x'
+    mmap[0] = 'x'
 
     mapped, err = mmap.InCore()
     c.Assert(err, IsNil)
