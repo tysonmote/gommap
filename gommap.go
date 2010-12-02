@@ -1,12 +1,13 @@
-// Type representing memory mapped file or device.  The Data field gives direct
-// access to the memory mapped content.
+// Type representing memory mapped file or device.  The returned MMap value,
+// which is itself an alias to a []byte slice, gives direct access to the
+// memory mapped content.
 //
 // IMPORTANT NOTE (1): The MMap type is backed by an unsafe memory region,
 // which is not covered by the normal rules of Go's memory management. If a
 // slice is taken out of it, and then the memory is explicitly unmapped through
-// one of the available methods, both the Data field and the slice obtained
-// will now silently point to invalid memory.  Attempting to access data in
-// them will crash the application.
+// one of the available methods, both the MMap value itself and the slice
+// obtained will now silently point to invalid memory.  Attempting to access
+// data in them will crash the application.
 package gommap
 
 import (
