@@ -1,7 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
 TARG=gommap
-GOFMT=gofmt -spaces=true -tabindent=false -tabwidth=4
 
 GOFILES=\
 	gommap.go\
@@ -13,10 +12,18 @@ include $(GOROOT)/src/Make.pkg
 CLEANFILES+=\
 	_consts.out\
 
-format:
-	${GOFMT} -w gommap.go
-	${GOFMT} -w gommap_test.go
-
 %.go: %.c
 	$(HOST_CC) -Wall -pedantic $< -o _$*.out
 	./_$*.out > $@
+
+GOFMT=gofmt
+BADFMT=$(shell $(GOFMT) -l $(GOFILES) $(wildcard *_test.go))
+
+gofmt: $(BADFMT)
+	@for F in $(BADFMT); do $(GOFMT) -w $$F && echo $$F; done
+
+ifneq ($(BADFMT),)
+ifneq ($(MAKECMDGOALS),gofmt)
+$(warning WARNING: make gofmt: $(BADFMT))
+endif
+endif
