@@ -37,8 +37,7 @@ func Map(fd int, prot, flags uint) (MMap, os.Error) {
 // using the specified region of the provided file or device. If -1 is provided
 // as length, this function will attempt to map until the end of the provided
 // file descriptor by using the fstat system call to discover its length.
-func MapRegion(fd int, offset, length int64,
-prot, flags uint) (MMap, os.Error) {
+func MapRegion(fd int, offset, length int64, prot, flags uint) (MMap, os.Error) {
 	mmap, err := MapAt(0, fd, offset, length, prot, flags)
 	return mmap, err
 }
@@ -49,8 +48,7 @@ prot, flags uint) (MMap, os.Error) {
 // position the memory mapped region. If -1 is provided as length, this
 // function will attempt to map until the end of the provided file descriptor
 // by using the fstat system call to discover its length.
-func MapAt(addr uintptr, fd int, offset, length int64,
-prot, flags uint) (MMap, os.Error) {
+func MapAt(addr uintptr, fd int, offset, length int64, prot, flags uint) (MMap, os.Error) {
 	if length == -1 {
 		var stat syscall.Stat_t
 		if errno := syscall.Fstat(fd, &stat); errno != 0 {
