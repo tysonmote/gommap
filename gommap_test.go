@@ -4,7 +4,7 @@ package gommap_test
 import (
 	. "launchpad.net/gocheck"
 	"testing"
-	"gommap"
+	"launchpad.net/gommap"
 	"path"
 	"os"
 	"io/ioutil"

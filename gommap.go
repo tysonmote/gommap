@@ -56,10 +56,7 @@ func MapAt(addr uintptr, fd int, offset, length int64, prot, flags uint) (MMap, 
 		}
 		length = stat.Size
 	}
-	addr, _, errno := syscall.Syscall6(syscall.SYS_MMAP, addr,
-		uintptr(length), uintptr(prot),
-		uintptr(flags), uintptr(fd),
-		uintptr(offset))
+	addr, errno := mmap_syscall(addr, uintptr(length), uintptr(prot), uintptr(flags), uintptr(fd), offset)
 	if errno != 0 {
 		return nil, os.Errno(errno)
 	}
@@ -80,8 +77,7 @@ func MapAt(addr uintptr, fd int, offset, length int64, prot, flags uint) (MMap, 
 // in which this type behaves.
 func (mmap MMap) UnsafeUnmap() os.Error {
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
-	_, _, errno := syscall.Syscall(syscall.SYS_MUNMAP,
-		uintptr(rh.Data), uintptr(rh.Len), 0)
+	_, _, errno := syscall.Syscall(syscall.SYS_MUNMAP, uintptr(rh.Data), uintptr(rh.Len), 0)
 	if errno != 0 {
 		return os.Errno(errno)
 	}
@@ -96,9 +92,7 @@ func (mmap MMap) UnsafeUnmap() os.Error {
 // scheduled) with MS_ASYNC.
 func (mmap MMap) Sync(flags uint) os.Error {
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
-	_, _, errno := syscall.Syscall(syscall.SYS_MSYNC,
-		uintptr(rh.Data), uintptr(rh.Len),
-		uintptr(flags))
+	_, _, errno := syscall.Syscall(syscall.SYS_MSYNC, uintptr(rh.Data), uintptr(rh.Len), uintptr(flags))
 	if errno != 0 {
 		return os.Errno(errno)
 	}
@@ -109,9 +103,7 @@ func (mmap MMap) Sync(flags uint) os.Error {
 // of input/output paging within the memory region defined by the mmap slice.
 func (mmap MMap) Advise(advice uint) os.Error {
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
-	_, _, errno := syscall.Syscall(syscall.SYS_MADVISE,
-		uintptr(rh.Data), uintptr(rh.Len),
-		uintptr(advice))
+	_, _, errno := syscall.Syscall(syscall.SYS_MADVISE, uintptr(rh.Data), uintptr(rh.Len), uintptr(advice))
 	if errno != 0 {
 		return os.Errno(errno)
 	}
@@ -122,9 +114,7 @@ func (mmap MMap) Advise(advice uint) os.Error {
 // the mmap slice.
 func (mmap MMap) Protect(prot uint) os.Error {
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
-	_, _, errno := syscall.Syscall(syscall.SYS_MPROTECT,
-		uintptr(rh.Data), uintptr(rh.Len),
-		uintptr(prot))
+	_, _, errno := syscall.Syscall(syscall.SYS_MPROTECT, uintptr(rh.Data), uintptr(rh.Len), uintptr(prot))
 	if errno != 0 {
 		return os.Errno(errno)
 	}
@@ -135,8 +125,7 @@ func (mmap MMap) Protect(prot uint) os.Error {
 // being swapped out.
 func (mmap MMap) Lock() os.Error {
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
-	_, _, errno := syscall.Syscall(syscall.SYS_MLOCK,
-		uintptr(rh.Data), uintptr(rh.Len), 0)
+	_, _, errno := syscall.Syscall(syscall.SYS_MLOCK, uintptr(rh.Data), uintptr(rh.Len), 0)
 	if errno != 0 {
 		return os.Errno(errno)
 	}
@@ -147,8 +136,7 @@ func (mmap MMap) Lock() os.Error {
 // swap out again.
 func (mmap MMap) Unlock() os.Error {
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
-	_, _, errno := syscall.Syscall(syscall.SYS_MUNLOCK,
-		uintptr(rh.Data), uintptr(rh.Len), 0)
+	_, _, errno := syscall.Syscall(syscall.SYS_MUNLOCK, uintptr(rh.Data), uintptr(rh.Len), 0)
 	if errno != 0 {
 		return os.Errno(errno)
 	}
@@ -165,9 +153,7 @@ func (mmap MMap) InCore() ([]uint8, os.Error) {
 	result := make([]uint8, (len(mmap)+pageSize-1)/pageSize)
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))
 	resulth := *(*reflect.SliceHeader)(unsafe.Pointer(&result))
-	_, _, errno := syscall.Syscall(syscall.SYS_MINCORE,
-		uintptr(rh.Data), uintptr(rh.Len),
-		uintptr(resulth.Data))
+	_, _, errno := syscall.Syscall(syscall.SYS_MINCORE, uintptr(rh.Data), uintptr(rh.Len), uintptr(resulth.Data))
 	if errno != 0 {
 		return nil, os.Errno(errno)
 	}

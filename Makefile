@@ -5,6 +5,7 @@ TARG=launchpad.net/gommap
 GOFILES=\
 	gommap.go\
 	consts.go\
+	mmap_$(GOOS)_$(GOARCH).go\
 
 include $(GOROOT)/src/Make.pkg
 
