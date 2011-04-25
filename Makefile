@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-TARG=gommap
+TARG=launchpad.net/gommap
 
 GOFILES=\
 	gommap.go\
