@@ -1,15 +1,14 @@
 package gommap_test
 
-
 import (
-	. "launchpad.net/gocheck"
-	"testing"
-	"launchpad.net/gommap"
-	"path"
-	"os"
 	"io/ioutil"
+	. "launchpad.net/gocheck"
+	"launchpad.net/gommap"
+	"os"
+	"path"
+	"syscall"
+	"testing"
 )
-
 
 func TestAll(t *testing.T) {
 	TestingT(t)
@@ -27,7 +26,7 @@ func (s *S) SetUpTest(c *C) {
 	testPath := path.Join(c.MkDir(), "test.txt")
 	file, err := os.Create(testPath)
 	if err != nil {
-		panic(err.String())
+		panic(err.Error())
 	}
 	s.file = file
 	s.file.Write(testData)
@@ -38,40 +37,37 @@ func (s *S) TearDownTest(c *C) {
 }
 
 func (s *S) TestUnsafeUnmap(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_SHARED)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_SHARED)
 	c.Assert(err, IsNil)
 	c.Assert(mmap.UnsafeUnmap(), IsNil)
 }
 
 func (s *S) TestReadWrite(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_SHARED)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_SHARED)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
-	c.Assert([]uint8(mmap), Equals, testData)
+	c.Assert([]byte(mmap), DeepEquals, testData)
 
 	mmap[9] = 'X'
 	mmap.Sync(gommap.MS_SYNC)
 
 	fileData, err := ioutil.ReadFile(s.file.Name())
 	c.Assert(err, IsNil)
-	c.Assert(fileData, Equals, []byte("012345678XABCDEF"))
+	c.Assert(fileData, DeepEquals, []byte("012345678XABCDEF"))
 }
 
 func (s *S) TestSliceMethods(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_SHARED)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_SHARED)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
-	c.Assert([]uint8(mmap), Equals, testData)
+	c.Assert([]byte(mmap), DeepEquals, testData)
 
 	mmap[9] = 'X'
 	mmap[7:10].Sync(gommap.MS_SYNC)
 
 	fileData, err := ioutil.ReadFile(s.file.Name())
 	c.Assert(err, IsNil)
-	c.Assert(fileData, Equals, []byte("012345678XABCDEF"))
+	c.Assert(fileData, DeepEquals, []byte("012345678XABCDEF"))
 }
 
 func (s *S) TestProtFlagsAndErr(c *C) {
@@ -80,15 +76,13 @@ func (s *S) TestProtFlagsAndErr(c *C) {
 	file, err := os.Open(testPath)
 	c.Assert(err, IsNil)
 	s.file = file
-	_, err = gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_SHARED)
-	// For this to happen, both the error and the protection flag work.
-	c.Assert(err, Equals, os.EACCES)
+	_, err = gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_SHARED)
+	// For this to happen, both the error and the protection flag must work.
+	c.Assert(err, Equals, syscall.EACCES)
 }
 
 func (s *S) TestFlags(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_PRIVATE)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_PRIVATE)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
 
@@ -98,29 +92,27 @@ func (s *S) TestFlags(c *C) {
 	fileData, err := ioutil.ReadFile(s.file.Name())
 	c.Assert(err, IsNil)
 	// Shouldn't have written, since the map is private.
-	c.Assert(fileData, Equals, []byte("0123456789ABCDEF"))
+	c.Assert(fileData, DeepEquals, []byte("0123456789ABCDEF"))
 }
 
 func (s *S) TestAdvise(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_PRIVATE)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_PRIVATE)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
 
 	// A bit tricky to blackbox-test these.
-
 	err = mmap.Advise(gommap.MADV_RANDOM)
 	c.Assert(err, IsNil)
 
 	err = mmap.Advise(9999)
-	c.Assert(err, Matches, "invalid argument")
+	c.Assert(err, ErrorMatches, "invalid argument")
 }
 
 func (s *S) TestProtect(c *C) {
 	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ, gommap.MAP_SHARED)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
-	c.Assert([]uint8(mmap), Equals, testData)
+	c.Assert([]byte(mmap), DeepEquals, testData)
 
 	err = mmap.Protect(gommap.PROT_READ | gommap.PROT_WRITE)
 	c.Assert(err, IsNil)
@@ -129,15 +121,12 @@ func (s *S) TestProtect(c *C) {
 	mmap[9] = 'X'
 }
 
-
 func (s *S) TestLock(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_PRIVATE)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_PRIVATE)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
 
 	// A bit tricky to blackbox-test these.
-
 	err = mmap.Lock()
 	c.Assert(err, IsNil)
 
@@ -152,14 +141,13 @@ func (s *S) TestLock(c *C) {
 }
 
 func (s *S) TestInCoreUnderOnePage(c *C) {
-	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_PRIVATE)
+	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_PRIVATE)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
 
 	mapped, err := mmap.InCore()
 	c.Assert(err, IsNil)
-	c.Assert(mapped, Equals, []uint8{1})
+	c.Assert(mapped, DeepEquals, []bool{true})
 }
 
 func (s *S) TestInCoreTwoPages(c *C) {
@@ -169,10 +157,9 @@ func (s *S) TestInCoreTwoPages(c *C) {
 	defer file.Close()
 
 	file.Seek(int64(os.Getpagesize()*2-1), 0)
-	file.Write([]uint8{'x'})
+	file.Write([]byte{'x'})
 
-	mmap, err := gommap.Map(file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE,
-		gommap.MAP_PRIVATE)
+	mmap, err := gommap.Map(file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_PRIVATE)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
 
@@ -182,11 +169,11 @@ func (s *S) TestInCoreTwoPages(c *C) {
 
 	mapped, err := mmap.InCore()
 	c.Assert(err, IsNil)
-	c.Assert(mapped, Equals, []uint8{0, 1})
+	c.Assert(mapped, DeepEquals, []bool{false, true})
 
 	mmap[0] = 'x'
 
 	mapped, err = mmap.InCore()
 	c.Assert(err, IsNil)
-	c.Assert(mapped, Equals, []uint8{1, 1})
+	c.Assert(mapped, DeepEquals, []bool{true, true})
 }
