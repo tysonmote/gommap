@@ -141,9 +141,9 @@ func (mmap MMap) Unlock() error {
 	return nil
 }
 
-// InCore returns a slice of booleans informing whether the respective
-// memory page in mmap was or not mapped at the time the call was made.
-func (mmap MMap) InCore() ([]bool, error) {
+// IsResident returns a slice of booleans informing whether the respective
+// memory page in mmap was mapped at the time the call was made.
+func (mmap MMap) IsResident() ([]bool, error) {
 	pageSize := os.Getpagesize()
 	result := make([]bool, (len(mmap)+pageSize-1)/pageSize)
 	rh := *(*reflect.SliceHeader)(unsafe.Pointer(&mmap))

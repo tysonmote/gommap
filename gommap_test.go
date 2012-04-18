@@ -140,17 +140,17 @@ func (s *S) TestLock(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *S) TestInCoreUnderOnePage(c *C) {
+func (s *S) TestIsResidentUnderOnePage(c *C) {
 	mmap, err := gommap.Map(s.file.Fd(), gommap.PROT_READ|gommap.PROT_WRITE, gommap.MAP_PRIVATE)
 	c.Assert(err, IsNil)
 	defer mmap.UnsafeUnmap()
 
-	mapped, err := mmap.InCore()
+	mapped, err := mmap.IsResident()
 	c.Assert(err, IsNil)
 	c.Assert(mapped, DeepEquals, []bool{true})
 }
 
-func (s *S) TestInCoreTwoPages(c *C) {
+func (s *S) TestIsResidentTwoPages(c *C) {
 	testPath := path.Join(c.MkDir(), "test.txt")
 	file, err := os.Create(testPath)
 	c.Assert(err, IsNil)
@@ -167,13 +167,13 @@ func (s *S) TestInCoreTwoPages(c *C) {
 
 	mmap[len(mmap)-1] = 'x'
 
-	mapped, err := mmap.InCore()
+	mapped, err := mmap.IsResident()
 	c.Assert(err, IsNil)
 	c.Assert(mapped, DeepEquals, []bool{false, true})
 
 	mmap[0] = 'x'
 
-	mapped, err = mmap.InCore()
+	mapped, err = mmap.IsResident()
 	c.Assert(err, IsNil)
 	c.Assert(mapped, DeepEquals, []bool{true, true})
 }
