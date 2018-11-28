@@ -28,7 +28,7 @@ The state of many implementations of the mem-maps is unclear in terms of support
 
 We created this fork really because we're prepared to support the implementation for now, and we're passing the changes back up to the original repo so they can accept them if they want to.
 
-The windows version is designed to require no changes to existing code; certainly this is the case for our liftbridge requirement, the liftbrodge server now builds and runs fine on windows, and it's been subjected to high volume tests that would force the flushing of the map without incident.
+The windows version is designed to require no changes to existing code; certainly this is the case for our liftbridge requirement, the liftbridge server now builds and runs fine on windows, and it's been subjected to high volume tests that would force the flushing of the map without incident.
 
 ### Limitations
 1. We have only tested this on 64-bit Windows
