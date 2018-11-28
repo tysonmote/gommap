@@ -32,11 +32,11 @@ The windows version is designed to require no changes to existing code; certainl
 
 ### Limitations
 1. We have only tested this on 64-bit Windows
-1. We have not been able to impement the (mmap)Advise() or (mmap)IsResident() functions - later versions of windows may have apis that can help to support these (from the documentation we've been able to find), but go can only distinguish os and architecture and those 'advanced' features are not generically available to 'windows'. Please raise an issue if this is a show-stopper.
+1. We have not been able to implement the (mmap)Advise() or (mmap)IsResident() functions - later versions of windows may have apis that can help to support these (from the documentation we've been able to find), but go can only distinguish os and architecture and those 'advanced' features are not generically available to 'windows'. Please raise an issue if this is a show-stopper.
 
 
 ### Prior Art
-Here’s a list of the alternative go mem-map packages that we looked at for help, and which anyone else may find helpful if you need cross-platform memory-mapping in go:
+Here’s a list of the alternative go mem-map packages that we looked at for help and/or borrowed from directly, and which anyone else may find helpful if you need cross-platform memory-mapping in go:
 
 https://github.com/edsrzf/mmap-go
 This one has a very similar interface to the original labix library, but does seem to provide support for windows and various linux distros and Mac.
