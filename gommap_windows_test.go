@@ -1,14 +1,13 @@
-// +build !windows
-
 package gommap
 
 import (
 	"io/ioutil"
-	. "launchpad.net/gocheck"
 	"os"
 	"path"
 	"syscall"
 	"testing"
+
+	. "gopkg.in/check.v1"
 )
 
 func TestAll(t *testing.T) {
@@ -96,19 +95,6 @@ func (s *S) TestFlags(c *C) {
 	c.Assert(fileData, DeepEquals, []byte("0123456789ABCDEF"))
 }
 
-func (s *S) TestAdvise(c *C) {
-	mmap, err := Map(s.file.Fd(), PROT_READ|PROT_WRITE, MAP_PRIVATE)
-	c.Assert(err, IsNil)
-	defer mmap.UnsafeUnmap()
-
-	// A bit tricky to blackbox-test these.
-	err = mmap.Advise(MADV_RANDOM)
-	c.Assert(err, IsNil)
-
-	err = mmap.Advise(9999)
-	c.Assert(err, ErrorMatches, "invalid argument")
-}
-
 func (s *S) TestProtect(c *C) {
 	mmap, err := Map(s.file.Fd(), PROT_READ, MAP_SHARED)
 	c.Assert(err, IsNil)
@@ -134,47 +120,12 @@ func (s *S) TestLock(c *C) {
 	err = mmap.Lock()
 	c.Assert(err, IsNil)
 
-	err = mmap.Unlock()
+	err = mmap.Lock()
 	c.Assert(err, IsNil)
 
 	err = mmap.Unlock()
 	c.Assert(err, IsNil)
-}
 
-func (s *S) TestIsResidentUnderOnePage(c *C) {
-	mmap, err := Map(s.file.Fd(), PROT_READ|PROT_WRITE, MAP_PRIVATE)
+	err = mmap.Unlock()
 	c.Assert(err, IsNil)
-	defer mmap.UnsafeUnmap()
-
-	mapped, err := mmap.IsResident()
-	c.Assert(err, IsNil)
-	c.Assert(mapped, DeepEquals, []bool{true})
-}
-
-func (s *S) TestIsResidentTwoPages(c *C) {
-	testPath := path.Join(c.MkDir(), "test.txt")
-	file, err := os.Create(testPath)
-	c.Assert(err, IsNil)
-	defer file.Close()
-
-	file.Seek(int64(os.Getpagesize()*2-1), 0)
-	file.Write([]byte{'x'})
-
-	mmap, err := Map(file.Fd(), PROT_READ|PROT_WRITE, MAP_PRIVATE)
-	c.Assert(err, IsNil)
-	defer mmap.UnsafeUnmap()
-
-	// Not entirely a stable test, but should usually work.
-
-	mmap[len(mmap)-1] = 'x'
-
-	mapped, err := mmap.IsResident()
-	c.Assert(err, IsNil)
-	c.Assert(mapped, DeepEquals, []bool{false, true})
-
-	mmap[0] = 'x'
-
-	mapped, err = mmap.IsResident()
-	c.Assert(err, IsNil)
-	c.Assert(mapped, DeepEquals, []bool{true, true})
 }
