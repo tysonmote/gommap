@@ -1,24 +1,21 @@
 
-## This is the original text from the upstream readme, preserved for reference:
-
 gommap
 ======
 
 This is a git mirror of [launchpad.net/gommap][bzr_source]. The `master` branch
-includes [this patch][osx_patch], which adds support for darwin64 (MacOS X).
+includes [this patch][osx_patch], which adds support for darwin64 (MacOS X), as
+well as [Windows support by @matt-farmer][windows_patch].
 
 [bzr_source]: http://launchpad.net/gommap
 [osx_patch]: https://code.launchpad.net/~karl-excors/gommap/gommap-darwin64/+merge/129364
+[windows_patch]: https://github.com/tysonmote/gommap/pull/3
 
 [Read more](http://labix.org/gommap)
 
 [API documentation](http://godoc.org/github.com/tysontate/gommap)
 
-
-nsip changes
-============
-
-This fork was created so that we could add windows support to gommap.
+Notes on Windows Support by @matt-farmer
+========================================
 
 Gommap is a dependency within the [liftbridge](https://github.com/liftbridge-io/liftbridge) streaming engine which we are using, and we need to be able to run the streaming server on windows.
 
