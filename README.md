@@ -12,7 +12,7 @@ well as [Windows support by @matt-farmer][windows_patch].
 
 [Read more](http://labix.org/gommap)
 
-[API documentation](http://godoc.org/github.com/tysontate/gommap)
+[API documentation](https://pkg.go.dev/github.com/tysonmote/gommap)
 
 Notes on Windows Support by @matt-farmer
 ========================================
