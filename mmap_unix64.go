@@ -1,3 +1,6 @@
+// +build linux freebsd
+// +build amd64 arm64
+
 package gommap
 
 import "syscall"
