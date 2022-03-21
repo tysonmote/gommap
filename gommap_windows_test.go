@@ -129,3 +129,12 @@ func (s *S) TestLock(c *C) {
 	err = mmap.Unlock()
 	c.Assert(err, IsNil)
 }
+
+func (s *S) TestSync(c *C) {
+	mmap, err := Map(s.file.Fd(), PROT_READ|PROT_WRITE, MAP_PRIVATE)
+	c.Assert(err, IsNil)
+	defer mmap.UnsafeUnmap()
+
+	err = mmap.Sync(MS_SYNC)
+	c.Assert(err, IsNil)
+}
