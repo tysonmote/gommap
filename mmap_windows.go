@@ -23,6 +23,7 @@ import (
 // We keep this map so that we can get back the original handle from the memory address.
 var handleLock sync.Mutex
 var handleMap = map[uintptr]syscall.Handle{}
+var fileHandleMap = map[uintptr]syscall.Handle{}
 var addrLocked = map[uintptr]bool{}
 
 func mmap(len int64, prot, flags, hfile uintptr, off int64) ([]byte, error) {
@@ -48,7 +49,8 @@ func mmap(len int64, prot, flags, hfile uintptr, off int64) ([]byte, error) {
 	maxSizeHigh := uint32((off + len) >> 32)
 	maxSizeLow := uint32((off + len) & 0xFFFFFFFF)
 	// TODO: Do we need to set some security attributes? It might help portability.
-	h, errno := syscall.CreateFileMapping(syscall.Handle(hfile), nil, flProtect, maxSizeHigh, maxSizeLow, nil)
+	fileHandle := syscall.Handle(hfile)
+	h, errno := syscall.CreateFileMapping(fileHandle, nil, flProtect, maxSizeHigh, maxSizeLow, nil)
 	if h == 0 {
 		if errno == syscall.ERROR_ACCESS_DENIED {
 			return nil, syscall.EACCES
@@ -66,6 +68,7 @@ func mmap(len int64, prot, flags, hfile uintptr, off int64) ([]byte, error) {
 	}
 	handleLock.Lock()
 	handleMap[addr] = h
+	fileHandleMap[addr] = fileHandle
 	handleLock.Unlock()
 
 	m := MMap{}
@@ -85,7 +88,7 @@ func flush(addr, len uintptr) error {
 
 	handleLock.Lock()
 	defer handleLock.Unlock()
-	handle, ok := handleMap[addr]
+	handle, ok := fileHandleMap[addr]
 	if !ok {
 		// should be impossible; we would've errored above
 		return errors.New("unknown base address")
@@ -137,6 +140,7 @@ func unmap(addr, len uintptr) error {
 		return errors.New("unknown base address")
 	}
 	delete(handleMap, addr)
+	delete(fileHandleMap, addr)
 
 	e := syscall.CloseHandle(syscall.Handle(handle))
 	return os.NewSyscallError("CloseHandle", e)
