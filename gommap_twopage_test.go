@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	. "launchpad.net/gocheck"
+	. "gopkg.in/check.v1"
 )
 
 func (s *S) TestIsResidentTwoPages(c *C) {
